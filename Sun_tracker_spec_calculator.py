@@ -23,7 +23,7 @@ def plot_solar_panel_output_interactive(outputs):
     fig.show()
 
 
-def solar_panel_output_at_angles(max_output, efficiency):
+def solar_panel_output_at_angles(max_output):
     """
     Calculate the solar panel's power output at different angles.
 
@@ -63,7 +63,7 @@ def calculate_solar_panel_size(motor_power, motor_efficiency, panel_efficiency, 
     solar_panel_area = required_panel_power / (solar_irradiance * panel_efficiency)
     solar_power_output = solar_panel_area * solar_irradiance * panel_efficiency
     print("solar panel output = ", solar_power_output)
-    return solar_panel_area
+    return solar_panel_area, required_panel_power
 
 
 def power_output_at_angles(motor_min_power, panel_max_output, panel_efficiency):
@@ -97,36 +97,37 @@ def main():
     motor_power = float(input("Enter motor power in Watts: "))
     motor_efficiency = float(input("Enter motor efficiency (as a decimal): "))
     motor_load_percentage = float(input("Enter motor load as a percentage of rated load: "))
+    # Get user inputs for motor and solar panel specifications
+    panel_efficiency = float(input("Enter solar panel efficiency (as a decimal): "))
+    solar_irradiance = float(input("Enter solar irradiance in Watts per square meter: "))
 
     # Adjust motor power based on load
     adjusted_motor_power = motor_power * motor_load_percentage / 100
 
-    option = input("do you want to calculate the required solar panel (1), or calculate if your solar panel will "
-                   "function as a sun tracker? (2)")
-    if option == '1':
-        # Get user inputs for motor and solar panel specifications
-        panel_efficiency = float(input("Enter solar panel efficiency (as a decimal): "))
-        solar_irradiance = float(input("Enter solar irradiance in Watts per square meter: "))
+    # Calculate and display necessary solar panel size
+    panel_size, required_power = calculate_solar_panel_size(adjusted_motor_power, motor_efficiency, panel_efficiency,
+                                                            solar_irradiance)
+    print(f"\nRequired solar panel area: {panel_size:.2f} square meters")
 
-        # Calculate and display necessary solar panel size
-        panel_size = calculate_solar_panel_size(adjusted_motor_power, motor_efficiency, panel_efficiency, solar_irradiance)
-        print(f"\nRequired solar panel area: {panel_size:.2f} square meters")
-    elif option == '2':
-        max_output = float(input("Enter your solar panel output rating: "))
-        panel_efficiency = float(input("Enter your solar panel efficiency (as a decimal): "))
-        # Calculate and display solar panel output at different angles
-        outputs = solar_panel_output_at_angles(max_output, panel_efficiency)
-        print("\nSolar Panel Power Output at Different Angles:")
-        for angle, output in outputs.items():
+    max_output = float(input("Enter your solar panel output rating: "))
+    panel_efficiency = float(input("Enter your solar panel efficiency (as a decimal): "))
+    # Calculate and display solar panel output at different angles
+    outputs = solar_panel_output_at_angles(max_output)
+    print("\nSolar Panel Power Output at Different Angles:")
+    for angle, output in outputs.items():
+        if output >= required_power:
             print(f"Angle {angle}°: {output:.2f} W")
+        else:
+            print(f"Angle {angle}°: {output:.2f} W", " : Maximum angle for functioning motor.")
+            break
 
-        # Plot the solar panel output
-        plot_solar_panel_output_interactive(outputs)
-        # Calculate and display the maximum angle
-        motor_min_power = adjusted_motor_power  # Use the adjusted motor power
+    # Plot the solar panel output
+    plot_solar_panel_output_interactive(outputs)
+    # Calculate and display the maximum angle
+    motor_min_power = adjusted_motor_power  # Use the adjusted motor power
 
-        max_angle = power_output_at_angles(motor_min_power, max_output, panel_efficiency)
-        print(f"\nMaximum angle before the motor won't turn: {max_angle}°")
+    max_angle = power_output_at_angles(motor_min_power, max_output, panel_efficiency)
+    print(f"\nMaximum angle before the motor won't turn: {max_angle}°")
 
 
 if __name__ == "__main__":
